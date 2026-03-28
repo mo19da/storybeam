@@ -12,6 +12,8 @@ const state = {
   age:                5,
   theme:              'animals',
   heroName:           '',
+  customTheme:        '',   // free-form spoken theme
+  projectorMode:      false,
   storyTitle:         '',
   storyState:         null,
   segments:           [],         // { text, imagePrompt }[]
@@ -64,6 +66,9 @@ const dom = {
   btnPause:           $('btn-pause'),
   btnSkip:            $('btn-skip'),
   btnHome:            $('btn-home'),
+  btnProjector:       $('btn-projector'),
+  btnVoiceTheme:      $('btn-voice-theme'),
+  voiceThemeResult:   $('voice-theme-result'),
   listeningOverlay:   $('listening-overlay'),
   transcriptDisplay:  $('transcript-display'),
   btnNeverMind:       $('btn-never-mind'),
@@ -146,8 +151,8 @@ async function apiPost(path, body) {
   return res.json();
 }
 
-async function apiGenerateStory({ childName, age, theme, heroName }) {
-  return apiPost('/api/generate-story', { childName, age, theme, heroName });
+async function apiGenerateStory({ childName, age, theme, heroName, customTheme }) {
+  return apiPost('/api/generate-story', { childName, age, theme, heroName, customTheme });
 }
 
 async function apiCustomizeStory({ childName, age, storyTitle, storyState, customization, currentSegmentIndex, sessionId }) {
@@ -683,6 +688,8 @@ function initSetupForm() {
     dom.themeGrid.querySelectorAll('.theme-card').forEach(c => c.classList.remove('selected'));
     card.classList.add('selected');
     state.theme = card.dataset.theme;
+    state.customTheme = '';
+    dom.voiceThemeResult.textContent = '';
   });
 
   // Form submit
@@ -713,10 +720,11 @@ async function handleFormSubmit(e) {
 
   try {
     const result = await apiGenerateStory({
-      childName: state.childName,
-      age:       state.age,
-      theme:     state.theme,
-      heroName:  state.heroName || null,
+      childName:   state.childName,
+      age:         state.age,
+      theme:       state.customTheme || state.theme,
+      heroName:    state.heroName || null,
+      customTheme: state.customTheme || null,
     });
 
     stopLoadingMessages();
@@ -794,6 +802,59 @@ function handleSkip() {
 function handleHome() {
   if (!confirm('Start a new story? The current story will end.')) return;
   resetToSetup();
+}
+
+function handleProjectorToggle() {
+  state.projectorMode = !state.projectorMode;
+  dom.btnProjector.classList.toggle('active', state.projectorMode);
+  dom.btnProjector.setAttribute('aria-pressed', String(state.projectorMode));
+  document.body.classList.toggle('projector-mode', state.projectorMode);
+}
+
+async function handleVoiceTheme() {
+  if (dom.btnVoiceTheme.classList.contains('recording')) return;
+
+  dom.btnVoiceTheme.classList.add('recording');
+  dom.btnVoiceTheme.textContent = '🔴 Listening…';
+  dom.voiceThemeResult.textContent = '';
+
+  let stream, recorder, chunks = [];
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : '';
+    recorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
+    chunks = [];
+    recorder.ondataavailable = e => { if (e.data?.size > 0) chunks.push(e.data); };
+
+    recorder.onstop = async () => {
+      stream.getTracks().forEach(t => t.stop());
+      dom.btnVoiceTheme.classList.remove('recording');
+      dom.btnVoiceTheme.innerHTML = '🎤 Speak your own theme';
+
+      if (chunks.length === 0) return;
+      const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
+      const { transcript } = await apiTranscribe(blob, null, state.age).catch(() => ({}));
+      if (transcript && transcript.trim()) {
+        state.customTheme = transcript.trim().slice(0, 80);
+        // Deselect preset theme cards since we have a custom one
+        dom.themeGrid.querySelectorAll('.theme-card').forEach(c => c.classList.remove('selected'));
+        dom.voiceThemeResult.textContent = `"${state.customTheme}"`;
+        showToast(`Theme set: "${state.customTheme}"`);
+      } else {
+        dom.voiceThemeResult.textContent = '';
+        showToast('Didn\'t catch that — try again');
+      }
+    };
+
+    recorder.start(100);
+    // Auto-stop after 5 seconds
+    setTimeout(() => { if (recorder.state !== 'inactive') recorder.stop(); }, 5000);
+
+  } catch (err) {
+    dom.btnVoiceTheme.classList.remove('recording');
+    dom.btnVoiceTheme.innerHTML = '🎤 Speak your own theme';
+    showToast('Microphone not available');
+  }
 }
 
 function resetToSetup() {
@@ -893,6 +954,8 @@ function bindEvents() {
   dom.btnHome.addEventListener('click', handleHome);
   dom.btnMoreStory.addEventListener('click', handleMoreStory);
   dom.btnNewStory.addEventListener('click', resetToSetup);
+  dom.btnProjector.addEventListener('click', handleProjectorToggle);
+  dom.btnVoiceTheme.addEventListener('click', handleVoiceTheme);
 
   // Prevent default touch delay on buttons for snappier UX
   document.querySelectorAll('button').forEach(btn => {

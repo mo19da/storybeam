@@ -79,7 +79,7 @@ For customize-story, return:
   ],
   "storyState": { ...same storyState shape above with all fields filled in... }
 }
-segments must have EXACTLY 3 objects.
+segments must have EXACTLY 2 objects.
 
 storyState.mood must be one of: joyful, adventurous, cozy, curious
 storyState.keyEvents: brief list of what happened, max 5 items
@@ -213,11 +213,11 @@ async function customizeStory({ childName, age, storyTitle, storyState, customiz
 
   const systemPrompt = buildSystemPrompt(childName, age, storyState?.theme || 'animals', storyState?.heroName);
   const userPrompt =
-    `Continue this story with the child's idea. Return ONLY the JSON object described in the system prompt.\n\n` +
-    `Story: "${storyTitle}"  |  Segment: ${currentSegmentIndex}\n` +
-    `Story state:\n${JSON.stringify(storyState, null, 2)}\n\n` +
-    `Child's idea: "${customization}"\n\n` +
-    `Generate EXACTLY 3 new segments that weave this idea in. Keep all characters and setting consistent.`;
+    `Continue the story by weaving in the child's idea in a simple, fun way. Return ONLY the JSON.\n\n` +
+    `Story: "${storyTitle}" | Current segment: ${currentSegmentIndex}\n` +
+    `Child said: "${customization}"\n` +
+    `Story so far: theme=${storyState?.theme}, setting=${storyState?.setting || 'magical place'}, characters=${(storyState?.characters || []).join(', ')}\n\n` +
+    `Generate EXACTLY 2 new story segments that naturally include what the child mentioned. Keep it short and fun.`;
 
   let lastError = null;
   let inputTokens = null;
@@ -231,7 +231,7 @@ async function customizeStory({ childName, age, storyTitle, storyState, customiz
           { role: 'system', content: systemPrompt },
           { role: 'user',   content: userPrompt },
         ],
-        max_tokens: 1400,
+        max_tokens: 900,
         temperature: 0.85,
         response_format: { type: 'json_object' },
       });

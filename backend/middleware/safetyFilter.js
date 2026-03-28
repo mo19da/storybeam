@@ -63,8 +63,10 @@ function validateClaudeResponse(data, type) {
   }
 
   const expectedCount = type === 'generate' ? 6 : 3;
+  const actualCount = data.segments?.length;
+  const validCount = type === 'generate' ? actualCount === 6 : (actualCount === 2 || actualCount === 3);
 
-  if (!validateSegments(data.segments, expectedCount)) {
+  if (!validCount || !validateSegments(data.segments, actualCount)) {
     return {
       valid: false,
       error: `segments invalid — expected ${expectedCount} non-empty items under 400 chars each`,
@@ -80,6 +82,19 @@ function validateClaudeResponse(data, type) {
   }
 
   return { valid: true };
+}
+
+/**
+ * Sanitize a free-form spoken theme. Returns the cleaned string or null if unsafe.
+ */
+function sanitizeTheme(raw) {
+  if (!raw || typeof raw !== 'string') return null;
+  const trimmed = raw.trim().slice(0, 80);
+  const lower = trimmed.toLowerCase();
+  for (const word of BAD_WORDS) {
+    if (lower.includes(word)) return null;
+  }
+  return trimmed;
 }
 
 /**
@@ -103,6 +118,7 @@ module.exports = {
   sanitizeInput,
   validateClaudeResponse,
   validateTheme,
+  sanitizeTheme,
   validateAge,
   ALLOWED_THEMES,
 };

@@ -14,7 +14,7 @@ const storyLibrary = require('./data/storyLibrary');
 const { transcribeAudio } = require('./pipeline/speechToText');
 const { synthesizeSpeech } = require('./pipeline/textToSpeech');
 const { generateImage } = require('./pipeline/imageGenerator');
-const { sanitizeInput, validateTheme, validateAge } = require('./middleware/safetyFilter');
+const { sanitizeInput, validateTheme, sanitizeTheme, validateAge } = require('./middleware/safetyFilter');
 const { storyLimiter, transcribeLimiter, generalLimiter } = require('./middleware/rateLimiter');
 const { log } = require('./utils/logger');
 
@@ -55,7 +55,7 @@ app.get('/api/health', (_req, res) => {
 // ─── Generate story ────────────────────────────────────────────────────────────
 
 app.post('/api/generate-story', storyLimiter, async (req, res) => {
-  const { childName, age, theme, heroName } = req.body;
+  const { childName, age, theme, heroName, customTheme } = req.body;
   const sessionId = uuidv4();
 
   if (!childName || childName.trim().length === 0) {
@@ -67,7 +67,8 @@ app.post('/api/generate-story', storyLimiter, async (req, res) => {
     return res.status(400).json({ error: 'Age must be between 2 and 8' });
   }
 
-  const validatedTheme = validateTheme(theme);
+  const cleanCustomTheme = customTheme ? sanitizeTheme(customTheme) : null;
+  const validatedTheme = cleanCustomTheme || validateTheme(theme);
   const cleanName = childName.trim().slice(0, 30);
   const cleanHero = heroName ? heroName.trim().slice(0, 50) : null;
 

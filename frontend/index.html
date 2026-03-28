@@ -76,6 +76,10 @@
             <span class="label">Ocean</span>
           </button>
         </div>
+        <button type="button" class="btn-voice-theme" id="btn-voice-theme" aria-label="Speak your own theme">
+          🎤 Speak your own theme
+        </button>
+        <div class="voice-theme-result" id="voice-theme-result"></div>
       </div>
 
       <div class="field">
@@ -84,6 +88,13 @@
                placeholder="e.g. Rosie, Max, Sparkle…"
                maxlength="50" autocomplete="off"
                autocorrect="off" autocapitalize="words" />
+      </div>
+
+      <div class="field projector-field">
+        <button type="button" class="btn-projector" id="btn-projector" aria-pressed="false">
+          📽️ Projector Mode
+        </button>
+        <div class="projector-hint">Optimises layout for TV or projector</div>
       </div>
 
       <button type="submit" class="btn-begin" id="btn-begin">

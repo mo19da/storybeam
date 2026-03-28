@@ -33,7 +33,7 @@ async function generateRunwareImage(imagePrompt, age) {
 
   // Younger kids get simpler, softer compositions; older kids get more detail
   const styleGuide = age <= 3
-    ? 'simple composition, single subject, very cute, pastel soft colors, flat illustration'
+    ? 'simple composition, single subject, very cute, soft muted earth tones, minimal colors, gentle watercolor, flat illustration, soothing and calm'
     : 'detailed scene, storybook adventure, vivid illustration, dynamic composition';
 
   const fullPrompt = `${imagePrompt}, ${styleGuide}${STYLE_SUFFIX}`;

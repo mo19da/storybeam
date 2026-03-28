@@ -655,3 +655,100 @@ html, body {
   .story-text { font-size: 0.95rem; }
   .controls { padding: 4px 24px 14px; gap: 8px; }
 }
+
+/* ── Projector mode ───────────────────────────────────────── */
+.btn-projector {
+  width: 100%;
+  background: var(--surface2);
+  border: 2px solid rgba(123,94,167,.25);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 12px;
+  transition: all .18s;
+}
+.btn-projector.active {
+  background: rgba(123,94,167,.25);
+  border-color: var(--purple-vivid);
+  color: var(--text);
+}
+.projector-hint {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin-top: 6px;
+  text-align: center;
+}
+
+/* Projector layout overrides */
+body.projector-mode #player-screen .story-text {
+  font-size: 1.6rem;
+  line-height: 1.7;
+}
+body.projector-mode #player-screen .player-header {
+  padding: 18px 24px 14px;
+}
+body.projector-mode #player-screen .story-title {
+  font-size: 1.4rem;
+}
+body.projector-mode #player-screen .controls {
+  padding: 10px 40px 32px;
+}
+body.projector-mode #player-screen .mic-btn {
+  width: 96px;
+  height: 96px;
+  font-size: 2.4rem;
+}
+body.projector-mode #player-screen .btn-secondary {
+  font-size: 1.1rem;
+  padding: 14px 24px;
+}
+
+/* Under-3 image desaturation (reduces visual overstimulation) */
+#player-screen.age-tiny .story-image {
+  filter: saturate(35%) brightness(1.05);
+}
+
+/* ── Voice theme button ───────────────────────────────────── */
+.btn-voice-theme {
+  width: 100%;
+  margin-top: 10px;
+  background: transparent;
+  border: 1.5px dashed rgba(123,94,167,.4);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 10px;
+  transition: all .2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn-voice-theme:hover {
+  border-color: var(--purple-vivid);
+  color: var(--text);
+}
+.btn-voice-theme.recording {
+  border-color: var(--red);
+  color: var(--red);
+  animation: pulse-border .9s ease-in-out infinite;
+}
+@keyframes pulse-border {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(248,113,113,.3); }
+  50%       { box-shadow: 0 0 0 8px rgba(248,113,113,0); }
+}
+.voice-theme-result {
+  margin-top: 8px;
+  min-height: 1.2em;
+  font-size: 0.88rem;
+  font-style: italic;
+  color: var(--gold);
+  text-align: center;
+  font-family: 'Lora', serif;
+}
