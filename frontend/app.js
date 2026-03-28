@@ -165,8 +165,8 @@ async function apiTranscribe(audioBlob, sessionId, childAge) {
   return res.json();
 }
 
-async function apiGenerateImage({ imagePrompt, segmentIndex, sessionId, childAge, theme }) {
-  return apiPost('/api/generate-image', { imagePrompt, segmentIndex, sessionId, childAge, theme });
+async function apiGenerateImage({ imagePrompt, segmentIndex, sessionId, childAge, theme, heroName }) {
+  return apiPost('/api/generate-image', { imagePrompt, segmentIndex, sessionId, childAge, theme, heroName });
 }
 
 // Synthesize — returns an object URL for an audio/mpeg blob
@@ -216,6 +216,7 @@ function loadImageForSegment(idx) {
     sessionId: state.sessionId,
     childAge: state.age,
     theme: state.theme,
+    heroName: state.heroName || null,
   }).then(({ imageUrl }) => {
     state.images[idx] = imageUrl || null;
     // If this is the current segment, display immediately

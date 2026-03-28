@@ -12,6 +12,7 @@
 
 const Database = require('better-sqlite3');
 const path     = require('path');
+const fs       = require('fs');
 const { v4: uuidv4 } = require('uuid');
 
 // Allow overriding via env so cloud hosts with persistent volumes can point here
@@ -21,6 +22,9 @@ let _db = null;
 
 function getDb() {
   if (_db) return _db;
+  // Ensure the directory exists (needed on cloud hosts where /data volume may not be pre-created)
+  const dir = path.dirname(DB_PATH);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
   _db = new Database(DB_PATH);
   _db.pragma('journal_mode = WAL');   // safe concurrent reads
   _db.exec(`

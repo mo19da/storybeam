@@ -184,7 +184,7 @@ app.post('/api/synthesize', async (req, res) => {
 // ─── Generate image ───────────────────────────────────────────────────────────
 
 app.post('/api/generate-image', async (req, res) => {
-  const { imagePrompt, segmentIndex, sessionId, childAge, theme } = req.body;
+  const { imagePrompt, segmentIndex, sessionId, childAge, theme, heroName } = req.body;
 
   if (!imagePrompt) {
     return res.json({ imageUrl: null, segmentIndex: segmentIndex ?? 0 });
@@ -193,9 +193,10 @@ app.post('/api/generate-image', async (req, res) => {
   const sid = sessionId || uuidv4();
   const age = validateAge(childAge) || 5;
   const validTheme = validateTheme(theme);
+  const cleanHero = heroName ? heroName.trim().slice(0, 50) : null;
 
   try {
-    const result = await generateImage(imagePrompt, segmentIndex ?? 0, sid, age, validTheme);
+    const result = await generateImage(imagePrompt, segmentIndex ?? 0, sid, age, validTheme, cleanHero);
     res.json(result);
   } catch (err) {
     console.error('[server] Image error:', err.message);

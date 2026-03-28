@@ -159,14 +159,14 @@ async function ensureCached(keyword, searchQuery) {
  * - fetches + caches in background if not, then returns result
  * On any failure returns null (frontend shows placeholder).
  */
-async function generateImage(imagePrompt, segmentIndex, sessionId, childAge, theme) {
+async function generateImage(imagePrompt, segmentIndex, sessionId, childAge, theme, heroName) {
   const startTime = Date.now();
 
   if (process.env.DISABLE_IMAGES === 'true') {
     return { imageUrl: null, segmentIndex };
   }
 
-  const { keyword, searchQuery } = extractKeyword(imagePrompt || '', theme || 'animals');
+  const { keyword, searchQuery } = extractKeyword(imagePrompt || '', theme || 'animals', heroName || null);
 
   try {
     // Fast path: already cached

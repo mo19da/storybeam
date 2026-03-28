@@ -16,6 +16,7 @@ const KID_KEYWORDS = {
   elephant:    'baby elephant nature',
   bear:        'bear cub forest nature',
   fox:         'red fox nature forest',
+  wolf:        'wolf nature forest wild',
   owl:         'owl bird nature tree',
   deer:        'baby deer fawn forest',
   duck:        'duck pond nature',
@@ -25,6 +26,7 @@ const KID_KEYWORDS = {
   horse:       'horse field nature',
   cat:         'cute cat kitten',
   dog:         'cute puppy dog',
+  puppy:       'cute puppy dog playful',
   bird:        'colorful bird nature branch',
   fish:        'colorful fish aquarium',
   whale:       'whale ocean blue sea',
@@ -40,6 +42,14 @@ const KID_KEYWORDS = {
   sheep:       'lamb sheep green field',
   cow:         'cow field green farm',
   chicken:     'baby chick chicken farm',
+  tiger:       'tiger cub nature wild',
+  panda:       'panda bear bamboo cute',
+  koala:       'koala tree cute australia',
+  crocodile:   'crocodile river nature',
+  snake:       'snake nature colorful',
+  hamster:     'cute hamster pet',
+  mouse:       'cute mouse nature',
+  rat:         'cute rat nature',
 
   // ── Dinosaurs ──────────────────────────────────────────────────────
   dinosaur:    'dinosaur nature prehistoric',
@@ -166,9 +176,28 @@ const ALL_KEYWORDS = Object.keys(KID_KEYWORDS);
 
 /**
  * Extract the best matching keyword from an imagePrompt + theme.
+ * heroName is checked first so the hero animal always dominates image selection.
  * Returns { keyword, searchQuery }.
  */
-function extractKeyword(imagePrompt, theme) {
+function extractKeyword(imagePrompt, theme, heroName) {
+  // Hero priority: check hero first so "dog" hero always gets dog photos
+  if (heroName) {
+    const heroLower = heroName.toLowerCase().trim();
+    // Try each word in the hero name (e.g. "brave wolf" → try "wolf" first)
+    const heroWords = heroLower.split(/\W+/).reverse(); // last word (noun) first
+    for (const word of heroWords) {
+      if (KID_KEYWORDS[word]) {
+        return { keyword: word, searchQuery: KID_KEYWORDS[word] };
+      }
+    }
+    // Substring match within keywords (e.g. "wolves" → "wolf")
+    for (const kw of ALL_KEYWORDS) {
+      if (heroLower.includes(kw) || kw.includes(heroLower)) {
+        return { keyword: kw, searchQuery: KID_KEYWORDS[kw] };
+      }
+    }
+  }
+
   const lower = imagePrompt.toLowerCase();
   const words  = lower.split(/\W+/);
 
