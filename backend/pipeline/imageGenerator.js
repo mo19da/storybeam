@@ -1,20 +1,22 @@
 'use strict';
 
 /**
- * Image provider — DALL-E free replacement.
+ * Image provider.
  *
  * Priority:
- *   1. Local disk cache  (instant, free, served via /image-cache/)
- *   2. Pixabay API       (free account, safesearch=true, kids-appropriate)
- *   3. Picsum Photos     (zero config fallback, deterministic per keyword)
+ *   1. Runware AI        (custom illustration from story prompt — best quality)
+ *   2. Local disk cache  (instant, free, served via /image-cache/)
+ *   3. Pixabay API       (free stock photo fallback)
+ *   4. Picsum Photos     (zero-config last resort)
  *
- * Cost: $0 per image.
- * Get a free Pixabay key at: https://pixabay.com/api/docs/
+ * Set RUNWARE_API_KEY in env to enable Runware (recommended).
+ * Set RUNWARE_MODEL to override the model (default: runware:100@1 = FLUX.1 schnell).
  */
 
 const fs   = require('fs');
 const path = require('path');
 const { extractKeyword } = require('../data/kidKeywords');
+const { generateRunwareImage } = require('./runwareImage');
 const { log } = require('../utils/logger');
 
 const CACHE_DIR  = process.env.IMAGE_CACHE_DIR  || path.join(__dirname, '../cache/images');
@@ -166,13 +168,27 @@ async function generateImage(imagePrompt, segmentIndex, sessionId, childAge, the
     return { imageUrl: null, segmentIndex };
   }
 
+  // ── 1. Runware: custom illustration from the actual story prompt ──────────────
+  if (process.env.RUNWARE_API_KEY) {
+    try {
+      const remoteUrl = await generateRunwareImage(imagePrompt || '', childAge);
+      if (remoteUrl) {
+        const latencyMs = Date.now() - startTime;
+        log({ event: 'image_generated', sessionId, childAge, theme, latencyMs, success: true, source: 'runware' });
+        console.log(`[image] Runware OK — seg=${segmentIndex} ${latencyMs}ms`);
+        return { imageUrl: remoteUrl, segmentIndex };
+      }
+    } catch (err) {
+      console.warn(`[image] Runware failed (falling back to Pixabay): ${err.message}`);
+    }
+  }
+
+  // ── 2. Pixabay / Picsum fallback ──────────────────────────────────────────────
   const { keyword, searchQuery } = extractKeyword(imagePrompt || '', theme || 'animals', heroName || null);
 
   try {
-    // Fast path: already cached
     let localUrl = getCachedUrl(keyword);
     if (!localUrl) {
-      // Slow path: fetch, cache, return
       const files = await ensureCached(keyword, searchQuery);
       if (files.length > 0) {
         const file = files[Math.floor(Math.random() * files.length)];
@@ -182,19 +198,18 @@ async function generateImage(imagePrompt, segmentIndex, sessionId, childAge, the
 
     const latencyMs = Date.now() - startTime;
     if (localUrl) {
-      log({ event: 'image_generated', sessionId, childAge, theme, latencyMs, success: true });
-      console.log(`[image] seg=${segmentIndex} keyword="${keyword}" ${localUrl} — ${latencyMs}ms`);
+      log({ event: 'image_generated', sessionId, childAge, theme, latencyMs, success: true, source: 'pixabay' });
+      console.log(`[image] Pixabay/cache — seg=${segmentIndex} keyword="${keyword}" ${latencyMs}ms`);
       return { imageUrl: localUrl, segmentIndex };
     }
 
-    // Nothing worked
     log({ event: 'image_generated', sessionId, childAge, theme, latencyMs, success: false, errorMessage: 'No images available' });
     return { imageUrl: null, segmentIndex };
 
   } catch (err) {
     const latencyMs = Date.now() - startTime;
     log({ event: 'image_generated', sessionId, childAge, theme, latencyMs, success: false, errorMessage: err.message });
-    console.error(`[image] Failed for keyword "${keyword}":`, err.message);
+    console.error(`[image] Pixabay also failed for "${keyword}":`, err.message);
     return { imageUrl: null, segmentIndex };
   }
 }
