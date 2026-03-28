@@ -1,0 +1,14 @@
+node_modules/
+backend/node_modules/
+.env
+logs/
+*.jsonl
+/tmp/
+audio.mp3
+.DS_Store
+Thumbs.db
+
+# Generated caches — not for git
+backend/cache/images/
+backend/cache/stories.db
+backend/cache/imageIndex.json

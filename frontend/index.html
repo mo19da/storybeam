@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0f0a1e" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>StoryBeam ✨</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<!-- ── Starfield background ─────────────────────────────── -->
+<div class="stars-bg" id="stars-bg" aria-hidden="true"></div>
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!--  SCREEN 1: Setup                                        -->
+<!-- ─────────────────────────────────────────────────────── -->
+<section id="setup-screen" class="screen active" role="main">
+  <div class="logo">
+    <div class="logo-title">✨ StoryBeam</div>
+    <div class="logo-sub">Magical stories, just for you</div>
+  </div>
+
+  <div class="setup-card">
+    <form id="setup-form" novalidate>
+
+      <div class="field">
+        <label for="child-name">Who is this story for?</label>
+        <input type="text" id="child-name" name="childName"
+               placeholder="Enter your child's name"
+               maxlength="30" autocomplete="off"
+               autocorrect="off" autocapitalize="words"
+               required />
+      </div>
+
+      <div class="field">
+        <label>How old are they?</label>
+        <div class="age-pills" id="age-pills" role="group" aria-label="Select age">
+          <button type="button" class="age-pill" data-age="2">2</button>
+          <button type="button" class="age-pill" data-age="3">3</button>
+          <button type="button" class="age-pill" data-age="4">4</button>
+          <button type="button" class="age-pill selected" data-age="5">5</button>
+          <button type="button" class="age-pill" data-age="6">6</button>
+          <button type="button" class="age-pill" data-age="7">7</button>
+          <button type="button" class="age-pill" data-age="8">8+</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Pick a story world</label>
+        <div class="theme-grid" id="theme-grid" role="group" aria-label="Select theme">
+          <button type="button" class="theme-card selected" data-theme="animals">
+            <span class="emoji">🦁</span>
+            <span class="label">Animals</span>
+          </button>
+          <button type="button" class="theme-card" data-theme="castles">
+            <span class="emoji">🏰</span>
+            <span class="label">Castles</span>
+          </button>
+          <button type="button" class="theme-card" data-theme="space">
+            <span class="emoji">🚀</span>
+            <span class="label">Space</span>
+          </button>
+          <button type="button" class="theme-card" data-theme="magic">
+            <span class="emoji">🧜</span>
+            <span class="label">Magic</span>
+          </button>
+          <button type="button" class="theme-card" data-theme="dinosaurs">
+            <span class="emoji">🦕</span>
+            <span class="label">Dinos</span>
+          </button>
+          <button type="button" class="theme-card" data-theme="ocean">
+            <span class="emoji">🌊</span>
+            <span class="label">Ocean</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="hero-name">Hero's name <span style="font-weight:400;text-transform:none;color:var(--text-dim)">(optional)</span></label>
+        <input type="text" id="hero-name" name="heroName"
+               placeholder="e.g. Rosie, Max, Sparkle…"
+               maxlength="50" autocomplete="off"
+               autocorrect="off" autocapitalize="words" />
+      </div>
+
+      <button type="submit" class="btn-begin" id="btn-begin">
+        Begin the Story! ✨
+      </button>
+    </form>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!--  SCREEN 2: Loading                                      -->
+<!-- ─────────────────────────────────────────────────────── -->
+<section id="loading-screen" class="screen" aria-live="polite">
+  <div class="loading-content">
+    <div class="magic-spinner">
+      <div class="loading-emoji" id="loading-emoji">✨</div>
+    </div>
+    <div class="loading-message" id="loading-message">Weaving your story…</div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!--  SCREEN 3: Player                                       -->
+<!-- ─────────────────────────────────────────────────────── -->
+<section id="player-screen" class="screen">
+  <header class="player-header">
+    <button class="btn-icon" id="btn-home" aria-label="New story" title="New story">🏠</button>
+    <h1 class="story-title" id="story-title">Your Story</h1>
+    <div style="width:32px"></div><!-- balance flex -->
+  </header>
+
+  <!-- Image zone -->
+  <div class="image-zone" id="image-zone">
+    <!-- SVG placeholder — animated starfield -->
+    <div class="image-placeholder" id="image-placeholder">
+      <svg class="placeholder-svg" viewBox="0 0 400 240" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="sky" cx="50%" cy="60%" r="70%">
+            <stop offset="0%" stop-color="#2a1460"/>
+            <stop offset="100%" stop-color="#0f0a1e"/>
+          </radialGradient>
+        </defs>
+        <rect width="400" height="240" fill="url(#sky)"/>
+        <!-- Static stars -->
+        <circle cx="40"  cy="30"  r="1.5" fill="white" opacity=".7"/>
+        <circle cx="120" cy="15"  r="1"   fill="white" opacity=".6"/>
+        <circle cx="200" cy="25"  r="2"   fill="white" opacity=".8"/>
+        <circle cx="290" cy="10"  r="1.5" fill="white" opacity=".7"/>
+        <circle cx="360" cy="40"  r="1"   fill="white" opacity=".5"/>
+        <circle cx="80"  cy="60"  r="1"   fill="white" opacity=".6"/>
+        <circle cx="330" cy="70"  r="1.5" fill="white" opacity=".7"/>
+        <circle cx="160" cy="50"  r="1"   fill="white" opacity=".5"/>
+        <circle cx="240" cy="80"  r="1"   fill="white" opacity=".6"/>
+        <!-- Moon -->
+        <circle cx="320" cy="55"  r="22"  fill="#f0c040" opacity=".15"/>
+        <circle cx="330" cy="48"  r="22"  fill="#1a0d2e" opacity=".85"/>
+        <circle cx="320" cy="55"  r="18"  fill="#f0c060" opacity=".12"/>
+        <!-- Sparkle group -->
+        <g opacity=".6">
+          <path d="M200 110 l3 10 l10 3 l-10 3 l-3 10 l-3-10 l-10-3 l10-3z" fill="#f0c040"/>
+          <path d="M100 130 l2 6 l6 2 l-6 2 l-2 6 l-2-6 l-6-2 l6-2z" fill="#c084fc"/>
+          <path d="M300 120 l2 6 l6 2 l-6 2 l-2 6 l-2-6 l-6-2 l6-2z" fill="#f0c040"/>
+        </g>
+        <!-- Loading text -->
+        <text x="200" y="185" text-anchor="middle" fill="#a78bca" font-family="Nunito,sans-serif" font-size="13" letter-spacing="2">PAINTING YOUR STORY…</text>
+      </svg>
+    </div>
+
+    <img class="story-image" id="story-image" alt="Story illustration" />
+  </div>
+
+  <!-- Progress dots -->
+  <div class="progress-dots" id="progress-dots" role="progressbar" aria-label="Story progress"></div>
+
+  <!-- Story text -->
+  <div class="story-text-zone">
+    <p class="story-text" id="story-text" aria-live="polite"></p>
+  </div>
+
+  <!-- Status line -->
+  <div class="status-line" id="status-line" aria-live="polite">Ready</div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <button class="mic-btn disabled" id="mic-btn" aria-label="Add your idea to the story" disabled>🎤</button>
+    <div class="mic-label" id="mic-label">Your idea</div>
+
+    <div class="secondary-controls">
+      <button class="btn-secondary" id="btn-replay" aria-label="Replay this part" disabled>
+        ↺ Replay
+      </button>
+      <button class="btn-secondary" id="btn-pause" aria-label="Pause narration" disabled>
+        ⏸ Pause
+      </button>
+      <button class="btn-secondary" id="btn-skip" aria-label="Skip to next part" disabled>
+        Skip ›
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!--  Overlay: Listening                                     -->
+<!-- ─────────────────────────────────────────────────────── -->
+<div id="listening-overlay" role="dialog" aria-label="Listening for your idea" aria-modal="true">
+  <div class="listen-ring">
+    <span class="listen-mic-icon">🎤</span>
+  </div>
+  <div class="listen-label">I'm listening…</div>
+  <div class="listen-hint">Say something to add to the story!</div>
+  <div class="transcript-display" id="transcript-display"></div>
+  <button class="btn-never-mind" id="btn-never-mind">Never mind</button>
+</div>
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!--  Overlay: Story done                                    -->
+<!-- ─────────────────────────────────────────────────────── -->
+<div id="done-overlay" role="dialog" aria-label="Story complete" aria-modal="true">
+  <div class="done-stars">🌟✨🌟</div>
+  <div class="done-title">
+    The End!<br/>
+    Amazing listening,<br/>
+    <span class="done-name" id="done-name">friend</span>!
+  </div>
+  <div class="done-subtitle">What an adventure that was!</div>
+  <div class="done-buttons">
+    <button class="btn-more" id="btn-more-story">More story! ✨</button>
+    <button class="btn-new"  id="btn-new-story">New story 🔮</button>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────────── -->
+<!--  Toast notification                                     -->
+<!-- ─────────────────────────────────────────────────────── -->
+<div id="toast" role="alert"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
