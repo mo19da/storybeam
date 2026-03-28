@@ -13,8 +13,9 @@
  * Set RUNWARE_MODEL to override the model (default: runware:100@1 = FLUX.1 schnell).
  */
 
-const fs   = require('fs');
-const path = require('path');
+const fs     = require('fs');
+const path   = require('path');
+const crypto = require('crypto');
 const { extractKeyword } = require('../data/kidKeywords');
 const { generateRunwareImage } = require('./runwareImage');
 const { log } = require('../utils/logger');
@@ -22,6 +23,19 @@ const { log } = require('../utils/logger');
 const CACHE_DIR  = process.env.IMAGE_CACHE_DIR  || path.join(__dirname, '../cache/images');
 const INDEX_FILE = process.env.IMAGE_INDEX_FILE || path.join(__dirname, '../cache/imageIndex.json');
 const VARIATIONS = 3;   // keep 3 variations per keyword (saves disk space)
+
+/** Stable age bucket so age 4 and age 5 share the same cached images */
+function ageGroup(age) {
+  if (age <= 3) return '2-3';
+  if (age <= 5) return '4-5';
+  return '6-8';
+}
+
+/** MD5 of prompt+ageGroup → short hex string used as cache key for Runware images */
+function runwareCacheKey(imagePrompt, age) {
+  const raw = `${imagePrompt.trim()}|${ageGroup(age)}`;
+  return 'rw_' + crypto.createHash('md5').update(raw).digest('hex').slice(0, 16);
+}
 
 // ─── Disk cache helpers ────────────────────────────────────────────────────────
 
@@ -170,13 +184,41 @@ async function generateImage(imagePrompt, segmentIndex, sessionId, childAge, the
 
   // ── 1. Runware: custom illustration from the actual story prompt ──────────────
   if (process.env.RUNWARE_API_KEY) {
+    const cacheKey = runwareCacheKey(imagePrompt || '', childAge);
+
+    // Cache hit — same prompt+age already generated before, reuse it
+    const cached = getCachedUrl(cacheKey);
+    if (cached) {
+      const latencyMs = Date.now() - startTime;
+      log({ event: 'image_generated', sessionId, childAge, theme, latencyMs, success: true, source: 'runware_cache' });
+      console.log(`[image] Runware cache HIT — seg=${segmentIndex} key=${cacheKey}`);
+      return { imageUrl: cached, segmentIndex };
+    }
+
+    // Cache miss — generate, download, save for next time
     try {
       const remoteUrl = await generateRunwareImage(imagePrompt || '', childAge);
       if (remoteUrl) {
+        // Download to disk so it's reused on every future request for same story+age
+        try {
+          const filename = await downloadToCache(remoteUrl, cacheKey, 0);
+          const index = loadIndex();
+          index[cacheKey] = [filename];
+          saveIndex(index);
+          console.log(`[image] Runware saved → ${filename}`);
+        } catch (saveErr) {
+          console.warn(`[image] Runware download failed (returning remote URL): ${saveErr.message}`);
+          // Still return the remote URL this one time
+          const latencyMs = Date.now() - startTime;
+          log({ event: 'image_generated', sessionId, childAge, theme, latencyMs, success: true, source: 'runware' });
+          return { imageUrl: remoteUrl, segmentIndex };
+        }
+
+        const localUrl = `/image-cache/${cacheKey.replace(/\W/g, '_')}_0.jpg`;
         const latencyMs = Date.now() - startTime;
         log({ event: 'image_generated', sessionId, childAge, theme, latencyMs, success: true, source: 'runware' });
-        console.log(`[image] Runware OK — seg=${segmentIndex} ${latencyMs}ms`);
-        return { imageUrl: remoteUrl, segmentIndex };
+        console.log(`[image] Runware generated+cached — seg=${segmentIndex} ${latencyMs}ms`);
+        return { imageUrl: getCachedUrl(cacheKey) || localUrl, segmentIndex };
       }
     } catch (err) {
       console.warn(`[image] Runware failed (falling back to Pixabay): ${err.message}`);
