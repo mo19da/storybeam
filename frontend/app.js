@@ -737,6 +737,8 @@ async function handleFormSubmit(e) {
     // Switch to player
     dom.storyTitle.textContent = result.title;
     dom.doneOverlay.classList.remove('active');
+    // Enlarge image zone for youngest kids who rely on visuals most
+    dom.playerScreen.classList.toggle('age-tiny', state.age <= 3);
     showScreen('player');
 
     updateProgressDots();
